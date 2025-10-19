@@ -43,6 +43,9 @@ public class App {
                 case 6 -> removeBook(bookService);
                 case 7 -> viewInventory(inventoryService);
                 case 8 -> viewLibrarySummary(inventoryService);
+                case 9 -> viewBookDetails(inventoryService);
+                case 10 -> viewPatronDetails(patronService);
+                case 11 -> updatePatron(patronService);
                 case 0 -> {
                     System.out.println("Exiting program...");
                     running = false;
@@ -63,6 +66,9 @@ public class App {
         System.out.println("6. Remove Book");
         System.out.println("7. View Inventory");
         System.out.println("8. Library Summary");
+        System.out.println("9. View Book Details");
+        System.out.println("10. View Patron Details");
+        System.out.println("11. Update Patron Details");
         System.out.println("0. Exit");
     }
 
@@ -90,7 +96,10 @@ public class App {
         String pubYear = readString("Enter publication year: ");
         int copies = readInt("Enter number of copies: ");
 
-        Book book = new Book(id, title, genre, null, author, null, pubYear, copies, copies, new ArrayList<>(), LocalDateTime.now(), null);
+        Book book = new Book(
+                id, title, genre, null, author, null, pubYear,
+                copies, copies, new ArrayList<>(), LocalDateTime.now(), null
+        );
         System.out.println(bookService.addBooks(List.of(book)));
     }
 
@@ -102,11 +111,32 @@ public class App {
         System.out.println(patronService.addPatrons(List.of(patron)));
     }
 
+    private static void updatePatron(PatronManagementService patronService) {
+        Long id = (long) readInt("Enter patron ID to update: ");
+        Patron existing = patronService.getPatronDetails(id);
+
+        if (existing == null) {
+            System.out.println("No patron found for ID: " + id);
+            return;
+        }
+
+        String name = readString("Enter new name (leave blank to keep unchanged): ");
+        if (!name.isEmpty()) {
+            existing.setName(name);
+        }
+        existing.setLastUpdatedTs(LocalDateTime.now());
+
+        System.out.println(patronService.updatePatrons(List.of(existing)));
+    }
+
     private static void searchBooks(BookManagementService bookService) {
         String title = readString("Enter title (or leave blank): ");
         String author = readString("Enter author (or leave blank): ");
 
-        List<Book> results = bookService.searchBooks(title.isEmpty() ? null : title, author.isEmpty() ? null : author);
+        List<Book> results = bookService.searchBooks(
+                title.isEmpty() ? null : title,
+                author.isEmpty() ? null : author
+        );
         if (results.isEmpty()) {
             System.out.println("No books found.");
         } else {
@@ -132,10 +162,32 @@ public class App {
     }
 
     private static void viewInventory(InventoryManagementService inventoryService) {
-      inventoryService.viewInventory();
+        inventoryService.viewInventory();
     }
 
     private static void viewLibrarySummary(InventoryManagementService inventoryManagementService) {
-       inventoryManagementService.viewLibrarySummary();
+        inventoryManagementService.viewLibrarySummary();
+    }
+
+    private static void viewBookDetails(InventoryManagementService inventoryService) {
+        Long bookId = (long) readInt("Enter book ID: ");
+        Book book = inventoryService.getBookDetails(bookId);
+        if (book == null) {
+            System.out.println("No book found for ID: " + bookId);
+        } else {
+            System.out.println("Book Details:");
+            System.out.println(book);
+        }
+    }
+
+    private static void viewPatronDetails(PatronManagementService patronService) {
+        Long patronId = (long) readInt("Enter patron ID: ");
+        Patron patron = patronService.getPatronDetails(patronId);
+        if (patron == null) {
+            System.out.println("No patron found for ID: " + patronId);
+        } else {
+            System.out.println("Patron Details:");
+            System.out.println(patron);
+        }
     }
 }

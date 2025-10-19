@@ -2,10 +2,9 @@ package org.example.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.constants.LendingEventType;
-import org.example.models.Book;
+import org.example.exception.validatorException;
 import org.example.models.BorrowedBookHistroy;
 import org.example.models.Patron;
-import org.example.service.InventoryManagementService;
 import org.example.service.PatronManagementService;
 
 import java.time.LocalDateTime;
@@ -42,7 +41,8 @@ public class PatronMangementServiceImpl implements PatronManagementService {
     }
 
     @Override
-    public String updateBorrowedDetails(Long bookId, Long patronId, LendingEventType eventType) {
+    public String updateBorrowedDetails(Long bookId, Long patronId, LendingEventType eventType) throws validatorException {
+        validatePatron(patronId);
         if (eventType.equals(LendingEventType.CHECKED_OUT)) {
             processCheckOutEvent(bookId, patronId);
             return "Updated the borrowed details successfully for checkout event";
@@ -63,6 +63,31 @@ public class PatronMangementServiceImpl implements PatronManagementService {
         return patronStore.get(patronId);
     }
 
+    @Override
+    public void validateCheckoutRequest(Long bookId, Long patronId) throws validatorException {
+        //VALIDATE IF PATRON EXISTS
+        validatePatron(patronId);
+        //VALDATE IF THE PATRON HAS BORROWED SAME BOOK ALREADY
+        Patron patron = patronStore.get(patronId);
+        if (!hasSameBookReturned(patron, bookId)) {
+            log.error("Patron with id {} request for the book with id {} which not been returned yet.", patronId, bookId);
+            throw new validatorException("Paton has not yet returned the same book. please return it to issue another.");
+        }
+    }
+
+    private boolean hasSameBookReturned(Patron patron, Long bookId) {
+        List<BorrowedBookHistroy> borrowedBookHistroys = patron.getBorrowedBookHistroyList();
+        if (borrowedBookHistroys != null && !borrowedBookHistroys.isEmpty()) {
+            List<BorrowedBookHistroy> sameBookHistory = borrowedBookHistroys.stream().filter(
+                    histroy -> {
+                        boolean b = histroy.getBookReferenceId().equals(bookId) && (histroy.getToDate() == null);
+                        return true;
+                    }
+            ).toList();
+            return (sameBookHistory.isEmpty());
+        }
+        return true;
+    }
     private void processCheckOutEvent(Long bookId, Long patronId) {
         BorrowedBookHistroy borrowedBookHistroy = new BorrowedBookHistroy();
         borrowedBookHistroy.setBookReferenceId(bookId);
@@ -80,5 +105,12 @@ public class PatronMangementServiceImpl implements PatronManagementService {
                     return histroy;
                 }
         );
+    }
+
+    private void validatePatron(Long patronId) throws validatorException {
+        if (patronStore.isEmpty() || !patronStore.containsKey(patronId)) {
+            log.error("Patron with id {} does not exist, check the request.", patronId);
+            throw new validatorException("Patron does not exist, please add the patron and try again.");
+        }
     }
 }
