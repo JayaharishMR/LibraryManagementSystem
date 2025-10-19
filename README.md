@@ -81,7 +81,9 @@ The application presents a **menu-driven interface**:
 5. Remove books from inventory.
 6. View inventory to see all books currently in the system.
 7. View library summary, including total copies and total available books.
-
+8. View Book details.
+9. View patron details.
+10. Update patron details.
 ---
 
 ### Example Interaction
@@ -96,6 +98,9 @@ The application presents a **menu-driven interface**:
 6. Remove Book
 7. View Inventory
 8. Library Summary
+9. View Book Details
+10. View Patron Details
+11. Update Patron Details
 0. Exit
 
 Enter your choice: 1
